@@ -1,15 +1,20 @@
 package xyz.kandrac.progressbar;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.support.annotation.ColorInt;
 import android.support.annotation.IntRange;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 
 import java.util.Locale;
 
@@ -24,10 +29,15 @@ public class HeavyProgressBar extends View {
     private int mProgressActual;
 
     private Paint mProgressPaint;
-    private Paint other;
+
+    private boolean animating = false;
+    private int animateProgress;
+    private boolean finishes = false;
 
     @ColorInt
     private int mTint;
+    private Paint mTextPaint;
+    Path path = new Path();
 
     public HeavyProgressBar(Context context) {
         this(context, null, 0);
@@ -42,10 +52,51 @@ public class HeavyProgressBar extends View {
         init(context, attrs);
     }
 
+    public void animateProgress(@IntRange(from = 0, to = 100) int toProgress) {
+
+        int delta = mProgressActual > toProgress ? mProgressActual - toProgress : toProgress - mProgressActual;
+
+        ValueAnimator animation = ValueAnimator.ofInt(mProgressActual, toProgress);
+        animation.setDuration(delta * 5);
+        animation.setInterpolator(new AccelerateDecelerateInterpolator());
+        animation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                setProgressPercent((int) valueAnimator.getAnimatedValue());
+            }
+        });
+        animation.start();
+    }
+
     public void setProgressPercent(@IntRange(from = 0, to = 100) int progress) {
         mProgressActual = progress;
-        invalidate();
-        requestLayout();
+        if (mProgressActual != 100) {
+            invalidate();
+            requestLayout();
+        } else {
+
+            ValueAnimator animation = ValueAnimator.ofInt(0, 50);
+            animation.setDuration(300);
+            animation.setInterpolator(new AccelerateDecelerateInterpolator());
+            animation.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                    animateProgress = (int) valueAnimator.getAnimatedValue();
+                    invalidate();
+                    requestLayout();
+                }
+            });
+            animation.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    animating = false;
+                    finishes = true;
+                }
+            });
+
+            animating = true;
+            animation.start();
+        }
     }
 
     private void init(Context context, AttributeSet attrs) {
@@ -62,11 +113,14 @@ public class HeavyProgressBar extends View {
         }
 
         mProgressPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mProgressPaint.setStrokeWidth(5);
-
+        mProgressPaint.setStrokeWidth(15);
+        mProgressPaint.setStyle(Paint.Style.STROKE);
         mProgressPaint.setColor(mTint);
-        mProgressPaint.setTextAlign(Paint.Align.CENTER);
-        mProgressPaint.setTextSize(20);
+
+        mTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mTextPaint.setColor(mTint);
+        mTextPaint.setTextAlign(Paint.Align.CENTER);
+        mTextPaint.setTextSize(30);
 
     }
 
@@ -121,16 +175,37 @@ public class HeavyProgressBar extends View {
 
         int paddingLeft = getPaddingLeft();
         int paddingRight = getPaddingRight();
-
         int width = getWidth() - paddingLeft - paddingRight;
 
-        int x = paddingLeft + width * mProgressActual / 100;
-        int modifiedProgress = mProgressActual < 50 ? mProgressActual : 100 - mProgressActual;
-        int y = (4 * modifiedProgress * modifiedProgress / getHeight()) + getHeight() / 2;
+        if (animating || finishes) {
 
-        canvas.drawLine(paddingLeft, getHeight() / 2, x, y, mProgressPaint);
-        canvas.drawLine(x, y, paddingLeft + width, getHeight() / 2, mProgressPaint);
+            // cut from both ends of line
+            int cutLine = width * animateProgress / 100;
+            int centerX = paddingLeft + width / 2;
+            int centerY = getHeight() / 2;
 
-        canvas.drawText(String.format(Locale.getDefault(), "%d%%", mProgressActual), x, y - 10, mProgressPaint);
+            canvas.drawLine(paddingLeft + cutLine, centerY, getWidth() - paddingRight - cutLine, centerY, mProgressPaint);
+            canvas.drawCircle(centerX, centerY, animateProgress, mTextPaint);
+
+        } else {
+
+            int x = paddingLeft + width * mProgressActual / 100;
+            int modifiedProgress = mProgressActual < 50 ? mProgressActual : 100 - mProgressActual;
+            int y = (4 * modifiedProgress * modifiedProgress / getHeight()) + getHeight() / 2;      // quadratic grow -> x^2
+
+            // connecting line
+            path.moveTo(paddingLeft, getHeight() / 2);
+            path.lineTo(x, y);
+            path.lineTo(paddingLeft + width, getHeight() / 2);
+
+            canvas.drawPath(path, mProgressPaint);
+            canvas.drawText(String.format(Locale.getDefault(), "%d%%", mProgressActual), x, y - 30, mTextPaint);
+
+            path.reset();
+        }
+
+        if (finishes) {
+            finishes = false;
+        }
     }
 }
