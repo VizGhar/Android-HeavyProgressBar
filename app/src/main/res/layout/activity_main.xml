@@ -11,12 +11,11 @@
     <xyz.kandrac.progressbar.HeavyProgressBar
         android:id="@+id/progress"
         android:layout_width="match_parent"
-        android:layout_height="40dp"
+        android:layout_height="wrap_content"
         android:layout_margin="30dp"
-        app:progress="10"
-        app:tint="@color/colorAccent"
-        tools:layout_editor_absoluteX="8dp"
-        tools:layout_editor_absoluteY="187dp" />
+        android:padding="50dp"
+        app:progress="50"
+        app:tint="@color/colorAccent" />
 
     <SeekBar
         android:id="@+id/seek"
