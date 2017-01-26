@@ -2,12 +2,14 @@ package xyz.kandrac.customprogressbar;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
 import android.widget.SeekBar;
 
 import xyz.kandrac.progressbar.HeavyProgressBar;
 
 public class MainActivity extends AppCompatActivity {
 
+    private SeekBar seekBar;
     private HeavyProgressBar progressBar;
 
     @Override
@@ -15,7 +17,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        final SeekBar seekBar = (SeekBar) findViewById(R.id.seek);
+        seekBar = (SeekBar) findViewById(R.id.seek);
         progressBar = (HeavyProgressBar) findViewById(R.id.progress);
 
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -34,5 +36,10 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    public void reset(View view) {
+        progressBar.reset();
+        seekBar.setProgress(0);
     }
 }

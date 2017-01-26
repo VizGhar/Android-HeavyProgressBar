@@ -14,6 +14,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="30dp"
         android:padding="10dp"
+        app:line_width="5dp"
         app:progress="0"
         app:tint="@color/colorAccent" />
 
@@ -23,4 +24,11 @@
         android:layout_height="wrap_content"
         android:layout_margin="30dp"
         android:max="100" />
+
+    <Button
+        android:onClick="reset"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:text="Reset" />
 </LinearLayout>

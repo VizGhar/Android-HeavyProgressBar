@@ -4,5 +4,7 @@
         <attr name="progress" format="integer" />
         <attr name="tint" format="color" />
         <attr name="max_drop" format="dimension" />
+        <attr name="line_width" format="dimension" />
+        <attr name="text_size" format="dimension" />
     </declare-styleable>
 </resources>
